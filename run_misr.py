@@ -14,61 +14,63 @@ from submodules.dcscn_super_resolution.helper import args as misr_args
 import cv2
 import numpy as np
 
-parser = argparse.ArgumentParser()
-parser.add_argument(
-    "--db_path",
-    type=str,
-    required=True,
-    help='Description'
-)
-parser.add_argument(
-    "--model_path",
-    type=str,
-    required=True,
-    help='Description'
-)
-parser.add_argument(
-    "--num_inputs",
-    type=int,
-    default=9,
-    required=False,
-    help='Description'
-)
-parser.add_argument(
-    "--scale_factor",
-    type=int,
-    default=3,
-    required=False,
-    help='Description'
-)
-parser.add_argument(
-    "--shuffle_input_images",
-    action="store_true",
-    default=False,
-    required=False,
-    help='Description'
-)
-parser.add_argument(
-    "--hr_filename_prefix",
-    type=str,
-    default="HR",
-    required=False,
-    help='Description'
-)
-parser.add_argument(
-    "--lr_filename_prefix",
-    type=str,
-    default="LR",
-    required=False,
-    help='Description'
-)
-args = parser.parse_args()
+# parser = argparse.ArgumentParser()
+# parser.add_argument(
+#     "--db_path",
+#     type=str,
+#     required=True,
+#     help='Description'
+# )
+# parser.add_argument(
+#     "--model_path",
+#     type=str,
+#     required=True,
+#     help='Description'
+# )
+# parser.add_argument(
+#     "--num_inputs",
+#     type=int,
+#     default=9,
+#     required=False,
+#     help='Description'
+# )
+# parser.add_argument(
+#     "--scale_factor",
+#     type=int,
+#     default=3,
+#     required=False,
+#     help='Description'
+# )
+# parser.add_argument(
+#     "--shuffle_input_images",
+#     action="store_true",
+#     default=False,
+#     required=False,
+#     help='Description'
+# )
+# parser.add_argument(
+#     "--hr_filename_prefix",
+#     type=str,
+#     default="HR",
+#     required=False,
+#     help='Description'
+# )
+# parser.add_argument(
+#     "--lr_filename_prefix",
+#     type=str,
+#     default="LR",
+#     required=False,
+#     help='Description'
+# )
+# args = parser.parse_args()
 
 # -------------------------- SETUP PARAMETERS -----------------------------
 # Set up the logger
 logging.basicConfig(format="%(asctime)s - %(message)s", datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger(os.path.dirname(os.path.realpath(__file__)))
 logger.setLevel(logging.INFO)
+
+args = misr_args.get()
 
 # -------------------------- CLASS DEFINITIONS ----------------------------
 
@@ -147,6 +149,7 @@ def run_for_dataset(dataset_list, misr_model):
         # Choose the first image as the reference. This will also be the 'x2' input
         x2_input_image = loaded_lr_images[0]
         x2_input_image = cv2.resize(x2_input_image, None, fx=args.scale_factor, fy=args.scale_factor)
+        x2_input_image_norm = cv2.normalize(x2_input_image, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
 
         # Run the inference on the MISR model
         lr_image_grid, concat_image = misr_model.do_for_misr(
@@ -159,12 +162,12 @@ def run_for_dataset(dataset_list, misr_model):
         new_concat_width = concat_image.shape[1] + x2_input_image.shape[1]
         new_concat_height = concat_image.shape[0]
         new_concat_image = np.zeros((new_concat_height, new_concat_width))
-        new_concat_image[0:, 0:x2_input_image.shape[1]] = x2_input_image
+        new_concat_image[0:, 0:x2_input_image.shape[1]] = x2_input_image_norm
         new_concat_image[0:, x2_input_image.shape[1]:] = concat_image
 
         # Display the output. Images are normalized for viewing in the MISR module.
-        cv2.imshow(lr_images_window_name, lr_image_grid)
-        cv2.imshow(output_window_name, new_concat_image)
+        cv2.imshow(lr_images_window_name, lr_image_grid.astype(np.uint8))
+        cv2.imshow(output_window_name, new_concat_image.astype(np.uint8))
         cv2.waitKey(0)
 
 
@@ -186,7 +189,9 @@ def main():
 
     # Load the MISR module and load the frozen graph
     misr_model = louis_misr.SuperResolution(flags=misr_args.get(), model_name="misr")
-    misr_model.load_graph()
+    misr_model.load_graph_misr(
+        frozen_graph_filename=args.model_path, num_input_images=args.num_inputs
+    )
     misr_model.init_all_variables()
 
     # Run the MISR on the database
