@@ -12,6 +12,7 @@ from submodules.dcscn_super_resolution.helper import args as misr_args
 
 # 3rd-party
 import cv2
+import cmapy
 import numpy as np
 
 # parser = argparse.ArgumentParser()
@@ -166,8 +167,10 @@ def run_for_dataset(dataset_list, misr_model):
         new_concat_image[0:, x2_input_image.shape[1]:] = concat_image
 
         # Display the output. Images are normalized for viewing in the MISR module.
-        cv2.imshow(lr_images_window_name, lr_image_grid.astype(np.uint8))
-        cv2.imshow(output_window_name, new_concat_image.astype(np.uint8))
+        cv2.imshow(lr_images_window_name, cv2.applyColorMap(
+            lr_image_grid.astype(np.uint8), cmapy.cmap("viridis")))
+        cv2.imshow(output_window_name, cv2.applyColorMap(
+            new_concat_image.astype(np.uint8), cmapy.cmap('viridis')))
         cv2.waitKey(0)
 
 
@@ -188,7 +191,7 @@ def main():
     dataset_list = read_and_log_db(args.db_path)
 
     # Load the MISR module and load the frozen graph
-    misr_model = louis_misr.SuperResolution(flags=misr_args.get(), model_name="misr")
+    misr_model = louis_misr.SuperResolution(flags=misr_args.get(), model_name="misr", is_module_training=False)
     misr_model.load_graph_misr(
         frozen_graph_filename=args.model_path, num_input_images=args.num_inputs
     )
