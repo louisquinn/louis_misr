@@ -4,3 +4,6 @@
 [submodule "submodules/cnn_registration"]
 	path = submodules/cnn_registration
 	url = https://github.com/louisquinn/cnn_registration.git
+[submodule "submodules/probav"]
+	path = submodules/probav
+	url = https://github.com/lfsimoes/probav.git
