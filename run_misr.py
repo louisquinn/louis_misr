@@ -153,7 +153,7 @@ def run_for_dataset(dataset_list, misr_model):
         x2_input_image_norm = cv2.normalize(x2_input_image, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
 
         # Run the inference on the MISR model
-        lr_image_grid, concat_image = misr_model.do_for_misr(
+        lr_image_grid, concat_image = misr_model.do_for_misr_with_visualisation(
             lr_input_images=loaded_lr_images,
             x2_image=x2_input_image,
             hr_image=hr_image

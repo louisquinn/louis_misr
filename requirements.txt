@@ -1,0 +1,14 @@
+opencv-python
+numpy
+tensorflow-gpu==1.12.0
+numba
+cmapy
+matplotlib
+scipy
+scikit-image
+lap
+pandas
+Pillow
+seaborn
+watermark
+numba
