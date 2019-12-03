@@ -21,12 +21,10 @@ from glob import glob
 # Third-party
 import cv2
 import scipy
+import skimage
 import numpy as np
 from tqdm import tqdm
 from scipy.interpolate import Rbf
-
-# Probav tools submodule
-from submodules.probav import embiggen
 
 # CNN registration module
 import submodules.cnn_registration.src.Registration as CNNRegistration
@@ -107,8 +105,30 @@ class ScenePreprocessor:
         - Subtract mean of all final images for normalization
         :return:
         """
+        def lowres_image_iterator(path, img_as_float=True):
+            """
+            Iterator over all of a scene's low-resolution images (LR*.png) and their
+            corresponding status maps (QM*.png).
+
+            Returns at each iteration a `(l, c)` tuple, where:
+            * `l`: matrix with the loaded low-resolution image (values as np.uint16 or
+                   np.float64 depending on `img_as_float`),
+            * `c`: the image's corresponding "clear pixel?" boolean mask.
+
+            Scenes' image files are described at:
+            https://kelvins.esa.int/proba-v-super-resolution/data/
+            """
+            path = path if path[-1] in {'/', '\\'} else (path + '/')
+            for f in glob(path + 'LR*.png'):
+                q = f.replace('LR', 'QM')
+                l = skimage.io.imread(f).astype(np.uint16)
+                c = skimage.io.imread(q).astype(np.bool)
+                if img_as_float:
+                    l = skimage.img_as_float64(l)
+                yield (l, c)
+
         def create_agg_image():
-            lr_images_and_qms = embiggen.lowres_image_iterator(self.scene_path, img_as_float=False)
+            lr_images_and_qms = lowres_image_iterator(self.scene_path, img_as_float=False)
 
             # Predefine some params we will need
             obsc = []
