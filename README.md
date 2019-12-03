@@ -30,7 +30,7 @@ The architecture extends DCSCN by allowing a dynamic number of input images to c
 The diagram below is a summary of the proposed architecture. 
 This is the original design from the DCSCN repo with the modifications shown in the RED box.  
 
-<!-- ![Louis MISR Architecture](docs/img/architecture.png) -->
+![Louis MISR Architecture](docs/img/architecture.png)
 
 * The Louis MISR constructs N branches of the **"feature extraction network"**, and provides all outputs to the
 first **"concatenate"** layer.
@@ -38,7 +38,8 @@ first **"concatenate"** layer.
 is utilised to build the final output image. 
 * The first image from the choices of LR images is used for the "bicubic up-sampling". 
 During training, this image is randomly chosen each iteration.
-* I also added a handy new MISR dataset factory, as I felt the original code for handling datasets was a little clunky. 
+* I also added a handy new MISR dataset factory, as I felt the original code for handling datasets was a little
+ clunky. Check out [dataset_factory_misr.py](submodules/dcscn_super_resolution/helper/dataset_factory_misr.py) 
 
 You can observe my additions to the DCSCN code by checking out the commit history of my fork of the repo 
 [here](https://github.com/louisquinn/dcscn_super_resolution/commits/7a5b24673f927b3eb9ad20b680fa04bb8a34d9d8).
@@ -91,9 +92,13 @@ The quality maps give information of which pixels of the image is obscructed by 
 We can utilise the multiple views of each scene to fill the obscured pixels with the mean, 
 or median of all the scene's LR images (aggregated image). This process is detailed below:
 
-Original Image | Quality Map | Aggregate Image of LR images | Final result
------------- | ------------- | ------------- | ------------- 
-![orig](docs/img/preprocessing/original_image.png) | ![orig](docs/img/preprocessing/quality_map.png) | ![orig](docs/img/preprocessing/agg_image.png) | ![orig](docs/img/preprocessing/final_image.png)
+Aggregate Image of LR images | Quality Map | 
+------------ | -------------  
+![orig](docs/img/preprocessing/agg_image.png) | ![orig](docs/img/preprocessing/quality_map.png)
+
+Original Image | Final Result
+------------- | ------------- 
+![orig](docs/img/preprocessing/original_image.png) | ![orig](docs/img/preprocessing/final_image.png)
 
 #### Image Registration 
 **NOTE: This is not fully implemented, however it is available**
