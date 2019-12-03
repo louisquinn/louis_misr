@@ -23,7 +23,7 @@ the challenge.
 
 ## Proposed Architecture
 The architecture used for this solution is a modified version of a state-of-the-art SISR network, 
-[DCSN](https://github.com/jiny2001/dcscn-super-resolution). 
+[DCSCN](https://github.com/jiny2001/dcscn-super-resolution). 
 The architecture extends DCSCN by allowing a dynamic number of input images to construct the final HR image.
 
 ### Architecture
