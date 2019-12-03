@@ -141,7 +141,7 @@ def run_for_dataset(dataset_list, misr_model):
         for image_path in input_image_paths:
             image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
             if image is None:
-                logger.error("Corrupted image: %s" % image_path)
+                print("Corrupted image: %s" % image_path)
                 raise AssertionError
             loaded_lr_images.append(image)
 
@@ -178,14 +178,11 @@ def run_for_dataset(dataset_list, misr_model):
 def main():
     # Check the given paths, params and report
     if not os.path.exists(args.db_path) or not os.path.isdir(args.db_path):
-        logger.error("Invalid or missing 'db_path'. Please check: %s" % args.db_path)
-        raise ValueError
+        raise ValueError("Invalid or missing 'db_path'. Please check: %s" % args.db_path)
     if not os.path.exists(args.model_path) or not os.path.isfile(args.model_path):
-        logger.error("Invalid or missing 'model_path'. Please check: %s" % args.model_path)
-        raise ValueError
+        raise ValueError("Invalid or missing 'model_path'. Please check: %s" % args.model_path)
     if args.num_inputs > 9:
-        logger.error("Number of input images must be <= 9. Otherwise you will run out of GPU memory :)")
-        raise ValueError
+        raise ValueError("Number of input images must be <= 9. Otherwise you will run out of GPU memory :)")
 
     # Read the given data and store
     dataset_list = read_and_log_db(args.db_path)
