@@ -176,21 +176,23 @@ The `--model_dir` param can be set to: `dcscn_super_resolution/models`.
 The output graph will be saved to the same path as `--model_dir`.
 
 ## Results
-Some example results on the validation set are shown below.
+Some example results on the validation set are shown below. 
 
-LR input images | Output: LR, MISR Output, Target
+**The increase in quality of the output image is best observed if you open the image directly in a new tab**
+
+LR input images | Output: Bicubic Resize, MISR Output, Target
 ------------ | -------------
 ![lr_grid0](docs/img/run_output/example0/lr_grid.png) | ![output0](docs/img/run_output/example0/output.png)
 
-LR input images | Output: LR, MISR Output, Target
+LR input images | Output: Bicubic Resize, MISR Output, Target
 ------------ | -------------
 ![lr_grid1](docs/img/run_output/example1/lr_grid.png) | ![output1](docs/img/run_output/example1/output.png)
 
-LR input images | Output: LR, MISR Output, Target
+LR input images | Output: Bicubic Resize, MISR Output, Target
 ------------ | -------------
 ![lr_grid2](docs/img/run_output/example2/lr_grid.png) | ![output2](docs/img/run_output/example2/output.png)
 
-LR input images | Output: LR, MISR Output, Target
+LR input images | Output: Bicubic Resize, MISR Output, Target
 ------------ | -------------
 ![lr_grid3](docs/img/run_output/example3/lr_grid.png) | ![output3](docs/img/run_output/example3/output.png)
 
