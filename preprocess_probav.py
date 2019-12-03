@@ -152,6 +152,35 @@ class ScenePreprocessor:
             # Store this image in the scene packet dict
             scene_packet["qm_filled_image"] = final_image
 
+            # TODO: for getting image output examples
+            # lr_image_disp = cv2.applyColorMap(
+            #     cv2.normalize(lr_image, None, 0, 255, norm_type=cv2.NORM_MINMAX).astype(np.uint8),
+            #     cmapy.cmap("viridis")
+            # )
+            # qm_image_disp = qm.copy()
+            # hr_image = cv2.applyColorMap(
+            #     cv2.normalize(
+            #         cv2.imread(self.scene_packet["hr_image_packet"]["image_path"], cv2.IMREAD_UNCHANGED),
+            #         None, 0, 255, norm_type=cv2.NORM_MINMAX
+            #     ).astype(np.uint8),
+            #     cmapy.cmap("viridis")
+            # )
+            # final_image_disp = cv2.applyColorMap(
+            #     cv2.normalize(final_image, None, 0, 255, norm_type=cv2.NORM_MINMAX).astype(np.uint8),
+            #     cmapy.cmap("viridis")
+            # )
+            # agg_image_disp = cv2.applyColorMap(
+            #     cv2.normalize(agg_ref_image, None, 0, 255, norm_type=cv2.NORM_MINMAX).astype(np.uint8),
+            #     cmapy.cmap("viridis")
+            # )
+            #
+            # cv2.imshow("orig", cv2.resize(lr_image_disp, None, fx=3, fy=3))
+            # cv2.imshow("qm", cv2.resize(qm_image_disp, None, fx=3, fy=3))
+            # cv2.imshow("agg", cv2.resize(agg_image_disp, None, fx=3, fy=3))
+            # cv2.imshow("final", cv2.resize(final_image_disp, None, fx=3, fy=3))
+            # cv2.imshow("hr image", hr_image)
+            # cv2.waitKey(0)
+
     def preprocess_image_registration(self):
         """
         Register the lr images using the first image as reference
@@ -172,13 +201,16 @@ class ScenePreprocessor:
                 lr_image_reg = self._tps_warp(y, z, lr_image_rgb, lr_ref_image_rgb.shape)
 
                 # Show the results
-                cv2.namedWindow("ref", cv2.WINDOW_NORMAL)
-                cv2.namedWindow("orig", cv2.WINDOW_NORMAL)
-                cv2.namedWindow("warp", cv2.WINDOW_NORMAL)
-                cv2.imshow("ref", cv2.normalize(lr_ref_image, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8))
-                cv2.imshow("orig", cv2.normalize(lr_image, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8))
-                cv2.imshow("warp", cv2.normalize(lr_image_reg, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8))
-                cv2.waitKey(0)
+                # cv2.namedWindow("ref", cv2.WINDOW_NORMAL)
+                # cv2.namedWindow("orig", cv2.WINDOW_NORMAL)
+                # cv2.namedWindow("warp", cv2.WINDOW_NORMAL)
+                # cv2.imshow("ref", cv2.normalize(lr_ref_image, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8))
+                # cv2.imshow("orig", cv2.normalize(lr_image, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8))
+                # cv2.imshow("warp", cv2.normalize(lr_image_reg, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8))
+                # cv2.waitKey(0)
+                #
+                # Save the warped output image
+                scene_packet["final_image"] = lr_image_reg
         else:
             for scene_packet in self.scene_packet["lr_image_packets"]:
                 scene_packet["final_image"] = scene_packet["qm_filled_image"]
