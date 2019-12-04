@@ -25,13 +25,13 @@ The following sections detail how I expanded upon a state of the art SISR archit
 the challenge. 
 
 ## Proposed Architecture
-The architecture used for this solution is a modified version of a state-of-the-art SISR network, 
+The architecture used for this solution is my modified version of a state-of-the-art SISR network, 
 [DCSCN](https://github.com/jiny2001/dcscn-super-resolution). 
-The architecture extends DCSCN by allowing a dynamic number of input images to construct the final HR image.
+My architecture extends DCSCN by allowing a dynamic number of input images to construct the final HR image.
 
 ### Architecture
 The diagram below is a summary of the proposed architecture. 
-This is the original design from the DCSCN repo with the modifications shown in the RED box.  
+This is the original design from the DCSCN repo with my modifications shown in the RED box.  
 
 ![Louis MISR Architecture](docs/img/architecture.png)
 
