@@ -80,7 +80,7 @@ source target_vm_path/bin/activate
 
 # Upgrade pip, and install the required Python modules
 pip3 install --upgrade pip
-pip3 install -r requirements.txt
+pip3 install --upgrade -r requirements.txt
 ```
 `requirements.txt` will install Tensorflow v1.12.0.
 
@@ -103,7 +103,7 @@ python run_misr.py \
 The `--db_path` can point to your `probav_data` folder, or to a specific scene in the train/test directories.
 
 The program will do the following:
-* Read the PROBA-V dataset.
+* Read the given PROBA-V dataset.
 * Pre-process the input LR images.
 * Run inference and display the results.
 * If there is no target HR image in the particular scene, the Target image will be blank. 
@@ -149,7 +149,8 @@ python preprocess_probav.py \
     --output_path=<path to dump the output>
 ```
 
-You can set the `--do_registration` argument for image registration.
+You can set the `--do_registration` argument for image registration **but not recommended.. it is VERY slow and
+ untested.**
 
 **Make a symlink from your preprocessed dataset to the module's data folder**
 ```bash
@@ -234,6 +235,10 @@ LR input images | Output: Bicubic Resize, MISR Output, Target
 ------------ | -------------
 ![lr_grid3](docs/img/run_output/example3/lr_grid.png) | ![output3](docs/img/run_output/example3/output.png)
 
+LR input images | Output: Bicubic Resize, MISR Output, Target
+------------ | -------------
+![lr_grid4](docs/img/run_output/example4/lr_grid.png) | ![output4](docs/img/run_output/example4/output.png)
+
 ### Visual Evaluation
 You can run inference on any of the images in the database as follows:
 ```bash
@@ -246,7 +251,9 @@ python run_misr.py \
 
 The script will: cycle through the database, perform inference, display the results in the following way:
 
-**Grid and concat image here**
+LR input images | Output: Bicubic Resize, MISR Output, Target
+------------ | -------------
+![lr_grid5](docs/img/run_output/example5/lr_grid.png) | ![output5](docs/img/run_output/example5/output.png)
 
 ## Summary and Improvements
 This was a great little side project to work on, it was quite a departure from my current work. 
