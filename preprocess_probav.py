@@ -12,10 +12,11 @@ This script will do the following for test/train sets of PROBAV
 """
 import os
 import sys
-import cmapy
+import time
 import shutil
 import logging
 import argparse
+import threading
 from glob import glob
 
 # Third-party
@@ -23,7 +24,7 @@ import cv2
 import scipy
 import skimage
 import numpy as np
-from tqdm import tqdm
+from progressive.bar import Bar
 from scipy.interpolate import Rbf
 
 # CNN registration module
@@ -95,7 +96,12 @@ class ScenePreprocessor:
         self.set_name = self.scene_packet["set_name"]
         self.scene_path = self.scene_packet["scene_path"]
 
-    def preprocess_image_processing(self):
+    def run_preprocessing(self):
+        self._preprocess_image_processing()
+        self._preprocess_image_registration()
+        self._output_images_to_file()
+
+    def _preprocess_image_processing(self):
         """
         Takes inspiration from `def central_tendency` from:
         https://github.com/cedricoeldorf/proba-v-super-resolution-challenge/blob/master/embiggen/aggregate.py
@@ -201,7 +207,7 @@ class ScenePreprocessor:
             # cv2.imshow("hr image", hr_image)
             # cv2.waitKey(0)
 
-    def preprocess_image_registration(self):
+    def _preprocess_image_registration(self):
         """
         Register the lr images using the first image as reference
         :return:
@@ -210,6 +216,7 @@ class ScenePreprocessor:
             # Grab the reference image
             lr_ref_image = self.scene_packet["lr_image_packets"][0]["qm_filled_image"]
             lr_ref_image_rgb = cv2.cvtColor(lr_ref_image, cv2.COLOR_GRAY2RGB)
+            self.scene_packet["lr_image_packets"][0]["final_image"] = lr_ref_image
 
             # Loop through the other lr images and register
             for scene_packet in self.scene_packet["lr_image_packets"][1:]:
@@ -235,7 +242,7 @@ class ScenePreprocessor:
             for scene_packet in self.scene_packet["lr_image_packets"]:
                 scene_packet["final_image"] = scene_packet["qm_filled_image"]
 
-    def output_images_to_file(self):
+    def _output_images_to_file(self):
         # Dump the LR images first
         for lr_image_packet in self.scene_packet["lr_image_packets"]:
             output_filename = os.path.join(
@@ -283,6 +290,34 @@ class ScenePreprocessor:
         out_image[iT, jT, :] = Y_image[iY, jY, :]
 
         return out_image
+
+
+class ScenePreprocessorThread:
+    def __init__(self, data_chunk, cnn_registration_module, thread_num, do_registration=False):
+        self.data_chunk = data_chunk
+        self.cnn_registration_module = cnn_registration_module
+        self.thread_num = thread_num
+        self.do_registration = do_registration
+
+        # Params for threading
+        self.progress = 0
+        self.is_finished = False
+
+    def run_thread(self):
+        for data_packet in self.data_chunk:
+            # Create a SceneProcessor class and pre-process
+            scene_preprocessor = ScenePreprocessor(
+                scene_packet=data_packet,
+                cnn_registration_module=self.cnn_registration_module,
+                do_registration=self.do_registration
+            )
+            scene_preprocessor.run_preprocessing()
+
+            # Update the progress counter
+            self.progress += 1
+
+        # Update the main thread that we are finished
+        self.is_finished = True
 
 
 # ------------------------- FUNCTION DEFINITIONS --------------------------
@@ -361,6 +396,12 @@ def log_dataset(dataset_path, output_path):
     return dataset_dict_list
 
 
+def chunks(l, n):
+    n = max(1, n)
+    l = [l[i:i + n] for i in range(0, len(l), n)]
+    return l
+
+
 # --------------------------------- MAIN ----------------------------------
 def main():
     # Check the input paths
@@ -371,21 +412,61 @@ def main():
     dataset_dict_list = log_dataset(args.dataset_path, args.output_path)
 
     # Load and build the cnn registration module
-    cnn_registration_module = CNNRegistration.CNN()
+    cnn_registration_module = None
+    if args.do_registration:
+        cnn_registration_module = CNNRegistration.CNN()
 
-    # Loop over the dataset dict list and do all processing
-    for data_packet in tqdm(dataset_dict_list, desc="PreprocessingDataset"):
-        # Create a SceneProcessor class
-        scene_preprocessor = ScenePreprocessor(
-            scene_packet=data_packet,
+    # Prepare to launch threads..
+    num_threads = os.cpu_count() * 4
+    data_chunks = chunks(dataset_dict_list, int(len(dataset_dict_list) / num_threads))
+
+    # Launch the threads
+    worker_list = []
+    for i in range(len(data_chunks)):
+        # Construct a thread class
+        worker = ScenePreprocessorThread(
+            data_chunk=data_chunks[i],
             cnn_registration_module=cnn_registration_module,
+            thread_num=i,
             do_registration=args.do_registration
         )
+        worker_list.append(worker)
 
-        # Preprocess image-processing functions and cnn registration
-        scene_preprocessor.preprocess_image_processing()
-        scene_preprocessor.preprocess_image_registration()
-        scene_preprocessor.output_images_to_file()
+        # Build the thread and start it
+        thread = threading.Thread(
+            name="data-preprocessor-thread-%d" % i,
+            target=worker.run_thread
+        )
+        thread.start()
+
+    # Monitor the threads and plot the output
+    # Create a progress bar
+    pbar = Bar(
+        max_value=len(dataset_dict_list),
+        title="PreprocessorProgress",
+        fallback=True
+    )
+    pbar.cursor.clear_lines(2)
+    pbar.cursor.save()
+
+    # Check if all threads are finished. If not, update the progress
+    threads_finished = False
+    while not threads_finished:
+        time.sleep(1)
+        is_finished_list = [worker.is_finished for worker in worker_list]
+        if all(is_finished_list):
+            threads_finished = True
+            continue
+        else:
+            counter = 0
+            for worker in worker_list:
+                counter += worker.progress
+            pbar.cursor.restore()
+            pbar.draw(value=counter)
+
+    # Update the final value
+    pbar.cursor.restore()
+    pbar.draw(value=len(dataset_dict_list))
     return 0
 
 
