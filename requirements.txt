@@ -12,3 +12,5 @@ seaborn
 watermark
 numba
 cmapy
+tqdm
+progressive
