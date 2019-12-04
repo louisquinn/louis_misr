@@ -5,6 +5,9 @@ using MISR (Multi Image Super Resolution).
 
 This README will detail how to use this repo, key implementation explanations and results. 
 
+### Period of Work 
+This work was conducted during the period of **21st November 2019 - 4th December 2019** at **~2-3 hours per day.**
+
 ## Problem Statement
 Proba-V refers to the ESA's (European Space Agency) Earth observation satellite, designed to map land cover 
 and vegetation grown across the Earth. The satellite is able to capture low resolution images at 300m and high 
@@ -81,6 +84,30 @@ pip3 install -r requirements.txt
 ```
 `requirements.txt` will install Tensorflow v1.12.0.
 
+## Quick Start
+You can quickly evaluate the frozen model provided with this repo in the following way:
+
+**Download the PROBA-V Dataset**
+* Download the dataset [from here.](https://kelvins.esa.int/media/competitions/proba-v-super-resolution/probav_data.zip)
+* Unzip the download and store it somewhere.
+
+**Run the quickstart program to get some results**
+```bash
+cd louis_misr
+python run_misr.py \
+    --db_path=<path to probav dataset or specific scene> \ 
+    --num_inputs=9 \
+    --model_path=frozen_graph.pb
+```
+
+The `--db_path` can point to your `probav_data` folder, or to a specific scene in the train/test directories.
+
+The program will do the following:
+* Read the PROBA-V dataset.
+* Pre-process the input LR images.
+* Run inference and display the results.
+* If there is no target HR image in the particular scene, the Target image will be blank. 
+
 ## Data pre-processing
 This section details the considerations and implementation of data pre-processing.
 
@@ -131,13 +158,12 @@ ln -s <path to output of preprocess script> probav
 ```
 
 ### Training
-```bash
-# Launch the training
-cd louis_misr/submodules/dcscn_super_resolution
-python train.py --dataset=probav
-```
 
 #### Important Params
+Open up [args.py](submodules/dcscn_super_resolution/helper/args.py) to change core training params.
+
+Below are the most important params to consider.
+
 Param Name | Default | Explanation
 ------------ | ------------- | -------------
 num_input_images | 9 | This is the number of LR inputs to the model. This also dictates how many feature extraction modules are generated. If you are running out of GPU memory you can lower this.
@@ -145,6 +171,18 @@ scale | 3 | The input to output resolution scale. 3 for PROBA-V challenge.
 layers | 12 | The number of layers for each feature extraction module. Reduce to **6** if you run out of GPU memory. 
 filters | 196 | Number of filters in each feature extraction module. Reduce to **98** if you run out of GPU memory.
 batch_num | 1 | The batch size. I was able to use a batch of **2** on my **Titan RTX**.
+
+**Now we can launch the training job!**
+
+```bash
+# Launch the training
+cd louis_misr/submodules/dcscn_super_resolution
+python train.py --dataset=probav
+```
+
+I trained the provided model on a **Nvidia TITAN RTX** and tested with a **Nvidia GTX1080**.
+
+
 
 ### Evaluation
 The module will perform evaluation in a new thread after each epoch. 
