@@ -106,7 +106,9 @@ python run_misr.py \
     --model_path=frozen_graph.pb
 ```
 
-The `--db_path` can point to your `probav_data` folder, or to a specific scene in the train/test directories.
+* The `--db_path` can point to your `probav_data` folder, or to a specific scene in the train/test directories.
+* An optional `--create_submission` flag can be set. This will generate the `submission.zip` file required for the 
+Proba-V Challenge.
 
 The program will do the following:
 * Read the given PROBA-V dataset.
