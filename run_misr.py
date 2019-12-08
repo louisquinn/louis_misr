@@ -9,12 +9,16 @@ from glob import glob
 from submodules.dcscn_super_resolution import DCSCN as louis_misr
 from submodules.dcscn_super_resolution.helper import args as misr_args
 
+# Embiggen module
+from submodules.probav.embiggen import io as probav_io
+
 # 3rd-party
 import cv2
 import cmapy
 import scipy
 import skimage
 import numpy as np
+from tqdm import tqdm
 
 logging.basicConfig(format="%(asctime)s - %(message)s", datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger(os.path.dirname(os.path.realpath(__file__)))
@@ -30,16 +34,25 @@ class ProbavInferenceEngine:
             db_path,
             model_path,
             scale_factor=3,
-            num_inputs=9
+            num_inputs=9,
+            create_submission=False
     ):
         self.db_path = db_path
         self.model_path = model_path
         self.scale_factor = scale_factor
         self.num_inputs = num_inputs
+        self.create_submission = create_submission
 
         # Storage params
         self.dataset_list = []
         self.misr_model = None
+        self.submission_dict = {"images": [], "filenames": []}
+
+        # Path to dump the submission
+        self.submission_path = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)),
+            "submission.zip"
+        )
 
         # Pre-processing ops
         self.agg_op = lambda i: np.nanmean(i, axis=0)
@@ -57,7 +70,8 @@ class ProbavInferenceEngine:
                 # Create a dict for storing the image packet
                 image_data_packet = {
                     "image_path_hr": None,
-                    "lr_image_packets": []
+                    "lr_image_packets": [],
+                    "scene_path": subdir
                 }
 
                 # We need the HR image, and the LR image/s
@@ -142,7 +156,7 @@ class ProbavInferenceEngine:
         return agg_image.astype(np.uint16)
 
     def _preprocess_probav_scene(self, scene_packet):
-        scene_path = os.path.dirname(scene_packet["image_path_hr"])
+        scene_path = scene_packet["scene_path"]
 
         # Get the aggregated image of the lowres samples
         agg_ref_image = self._create_agg_image(scene_path=scene_path)
@@ -162,7 +176,7 @@ class ProbavInferenceEngine:
         # cv2.namedWindow(lr_images_window_name, cv2.WINDOW_NORMAL)
         # cv2.namedWindow(output_window_name, cv2.WINDOW_NORMAL)
 
-        for image_packet in self.dataset_list:
+        for image_packet in tqdm(self.dataset_list, desc="ProcessingProbaV"):
             # Pre-process this scene's LR images.
             self._preprocess_probav_scene(scene_packet=image_packet)
 
@@ -183,7 +197,7 @@ class ProbavInferenceEngine:
             x2_input_image_norm = cv2.normalize(x2_input_image, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
 
             # Run the inference on the MISR model
-            lr_image_grid, concat_image = self.misr_model.do_for_misr_with_visualisation(
+            output_image, lr_image_grid, concat_image = self.misr_model.do_for_misr_with_visualisation(
                 lr_input_images=input_images_list,
                 x2_image=x2_input_image,
                 hr_image=hr_image
@@ -197,11 +211,24 @@ class ProbavInferenceEngine:
             new_concat_image[0:, x2_input_image.shape[1]:] = concat_image
 
             # Display the output. Images are normalized for viewing in the MISR module.
-            cv2.imshow(lr_images_window_name, cv2.applyColorMap(
-                lr_image_grid.astype(np.uint8), cmapy.cmap("viridis")))
-            cv2.imshow(output_window_name, cv2.applyColorMap(
-                new_concat_image.astype(np.uint8), cmapy.cmap('viridis')))
-            cv2.waitKey(0)
+            # If we are creating a submission, skip showing the output
+            if not self.create_submission:
+                cv2.imshow(lr_images_window_name, cv2.applyColorMap(
+                    lr_image_grid.astype(np.uint8), cmapy.cmap("viridis")))
+                cv2.imshow(output_window_name, cv2.applyColorMap(
+                    new_concat_image.astype(np.uint8), cmapy.cmap('viridis')))
+                cv2.waitKey(0)
+            else:
+                # If we are creating a submission, store the relevant params
+                self.submission_dict["images"].append(output_image.astype(np.uint16))
+                self.submission_dict["filenames"].append(os.path.basename(image_packet["scene_path"]))
+
+        # Write the submission, if we must
+        probav_io.prepare_submission(
+            images=self.submission_dict["images"],
+            scenes=self.submission_dict["filenames"],
+            subm_fname=self.submission_path
+        )
 
 
 # ------------------------- FUNCTION DEFINITIONS --------------------------
@@ -222,7 +249,8 @@ def main():
         db_path=args.db_path,
         model_path=args.model_path,
         scale_factor=3,
-        num_inputs=9
+        num_inputs=9,
+        create_submission=args.create_submission
     )
     misr_inference_engine.run_inference_on_dataset()
     return 0

@@ -8,6 +8,12 @@ This README will detail how to use this repo, key implementation explanations an
 ### Period of Work 
 This work was conducted during the period of **21st November 2019 - 4th December 2019** at **~2-3 hours per day.**
 
+### Results
+The challenge creators are still processing submissions for research purposes. 
+
+The frozen model available in this repo got a score of **0.9926395662911185**, which is below the baseline and
+ satisfies the challenge requirements. See the [results](#proba-v-post-mortem-submission) section for more details.
+
 ## Problem Statement
 Proba-V refers to the ESA's (European Space Agency) Earth observation satellite, designed to map land cover 
 and vegetation grown across the Earth. The satellite is able to capture low resolution images at 300m and high 
@@ -183,8 +189,6 @@ python train.py --dataset=probav
 
 I trained the provided model on a **Nvidia TITAN RTX** and tested with a **Nvidia GTX1080**.
 
-
-
 ### Evaluation
 The module will perform evaluation in a new thread after each epoch. 
 Interesting plots and image results can be viewed in Tensorboard (see below).
@@ -215,6 +219,19 @@ The `--model_dir` param can be set to: `dcscn_super_resolution/models`.
 The output graph will be saved to the same path as `--model_dir`.
 
 ## Results
+
+### Proba-V Post Mortem Submission
+The challenge creators are still processing submissions for research purposes. The frozen model available in this repo 
+got a score of **0.9926395662911185**, which is below the baseline and satisfies the challenge requirements.
+
+This ranks **9th** on the [Post Mortem Leaderboard](https://kelvins.esa.int/proba-v-super-resolution-post-mortem/leaderboard/) 
+and **14th** on the [official competition leaderboard](https://kelvins.esa.int/proba-v-super-resolution/leaderboard/).
+
+Below is a screenshot of the leader board at the time of submission.
+
+![submission](docs/img/submission.png)
+
+### Visualised Results
 Some example results on the validation set are shown below. 
 
 **The increase in quality of the output image is best observed if you open the image directly in a new tab**
@@ -268,9 +285,6 @@ Some of these improvements are listed in the next section below.
 * **Training Data Augmentation:** Augmentation is important to improving a model's robustness. In my current work
 I apply it to every training job I do. I usually use the popular **imgaug** library, or implement my own methods in 
 Tensorflow. Augmentors like brightness, contrast, random noise etc would be beneficial to MISR.
-* **Proper cPSNR Calculation:** I believe there is an error either in my interpretation of the scoring procedure, or in 
-the tools I was using to score. It is evident from observing the network's output that the MISR images are of higher 
-quality than bicubic resizing, however to provide a complete solution this metric needs to be calculated properly. 
 * **Image Registration:** Registration will improve results, however I was not able to implement this properly in the time
 frame I allotted to myself. Ideally, this would happen internally in the network, as was done by the competition's winners.
 
